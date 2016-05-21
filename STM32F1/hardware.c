@@ -31,71 +31,11 @@
  */
 #include "common.h"
 #include "hardware.h"
-/*
-void setPin(u32 bank, u8 pin) {
-    u32 pinMask = 0x1 << (pin);
-    SET_REG(GPIO_BSRR(bank), pinMask);
-}
 
-void resetPin(u32 bank, u8 pin) {
-    u32 pinMask = 0x1 << (16 + pin);
-    SET_REG(GPIO_BSRR(bank), pinMask);
-}
-*/
-void gpio_write_bit(u32 bank, u8 pin, u8 val) {
-    val = !val;          // "set" bits are lower than "reset" bits  
-    SET_REG(GPIO_BSRR(bank), (1U << pin) << (16 * val));
-}
 
-bool readPin(u32 bank, u8 pin) {
-    // todo, implement read
-    if (GET_REG(GPIO_IDR(bank)) & (0x01 << pin)) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
-
-bool readButtonState() {
-    // todo, implement read
-	bool state=FALSE;
- #if defined(BUTTON_BANK) && defined (BUTTON_PIN) && defined (BUTTON_PRESSED_STATE)	
-    if (GET_REG(GPIO_IDR(BUTTON_BANK)) & (0x01 << BUTTON_PIN)) 
-	{
-        state = TRUE;
-    } 
-	
-	if (BUTTON_PRESSED_STATE==0)
-	{
-		state=!state;
-	}
-#endif
-	return state;
-}
-
-void strobePin(u32 bank, u8 pin, u8 count, u32 rate,u8 onState) 
+/* system init shit */
+void systemReset(void)
 {
-    gpio_write_bit( bank,pin,1-onState);
-
-    u32 c;
-    while (count-- > 0) 
-	{
-        for (c = rate; c > 0; c--)
-		{
-            asm volatile("nop");
-        }
-		
-        gpio_write_bit( bank,pin,onState);
-		
-        for (c = rate; c > 0; c--)
-		{
-            asm volatile("nop");
-        }
-        gpio_write_bit( bank,pin,1-onState);
-    }
-}
-
-void systemReset(void) {
     SET_REG(RCC_CR, GET_REG(RCC_CR)     | 0x00000001);
     SET_REG(RCC_CFGR, GET_REG(RCC_CFGR) & 0xF8FF0000);
     SET_REG(RCC_CR, GET_REG(RCC_CR)     & 0xFEF6FFFF);
@@ -105,7 +45,8 @@ void systemReset(void) {
     SET_REG(RCC_CIR, 0x00000000);  /* disable all RCC interrupts */
 }
 
-void setupCLK(void) {
+void setupCLK(void)
+{
 	unsigned int StartUpCounter=0;
     /* enable HSE */
     SET_REG(RCC_CR, GET_REG(RCC_CR) | 0x00010001);
@@ -121,20 +62,18 @@ void setupCLK(void) {
     SET_REG(RCC_CFGR, GET_REG(RCC_CFGR) | 0x001D0400); /* pll=72Mhz(x9),APB1=36Mhz,AHB=72Mhz */
 #endif	
 
-    SET_REG(RCC_CR, GET_REG(RCC_CR)     | 0x01000000); /* enable the pll */
+    /* enable the pll */
+    SET_REG(RCC_CR, GET_REG(RCC_CR)     | 0x01000000);
 	
 
-#if !defined  (HSE_STARTUP_TIMEOUT) 
-  #define HSE_STARTUP_TIMEOUT    ((unsigned int)0x0500)   /*!< Time out for HSE start up */
+#if !defined  (HSE_STARTUP_TIMEOUT)
+  #define HSE_STARTUP_TIMEOUT    ((unsigned int)0x0500) /*!< Time out for HSE start up */
 #endif /* HSE_STARTUP_TIMEOUT */   
 
-    while ((GET_REG(RCC_CR) & 0x03000000) == 0 && StartUpCounter < HSE_STARTUP_TIMEOUT)
-	{
-//		StartUpCounter++; // This is commented out, so other changes can be committed. It will be uncommented at a later date
-	}	/* wait for it to come on */
-
-	if (StartUpCounter>=HSE_STARTUP_TIMEOUT)
-	{
+    StartUpCounter = HSE_STARTUP_TIMEOUT;
+    while ((GET_REG(RCC_CR) & 0x03000000) == 0 && --StartUpCounter);
+	
+	if (!StartUpCounter) {
 		// HSE has not started. Try restarting the processor
 		systemHardReset(); 
 	}
@@ -142,52 +81,70 @@ void setupCLK(void) {
     /* Set SYSCLK as PLL */
     SET_REG(RCC_CFGR, GET_REG(RCC_CFGR) | 0x00000002);
     while ((GET_REG(RCC_CFGR) & 0x00000008) == 0); /* wait for it to come on */
-	
-    pRCC->APB2ENR |= 0B111111100;// Enable All GPIO channels (A to G)
-	pRCC->APB1ENR |= RCC_APB1ENR_USB_CLK;
+
+    	
+    // Enable All GPIO channels (A to E), AFIO clock; disable any other clocks
+    SET_REG(RCC_APB2ENR, 0x0000007d);
+    // disable JTAG pins
+    SET_REG(AFIO_MAPR,   AFIO_MAPR_SWJ_CFG_NO_JTAG_SW);
 }
 
 
-void setupLEDAndButton (void) {
- // SET_REG(AFIO_MAPR,(GET_REG(AFIO_MAPR) & ~AFIO_MAPR_SWJ_CFG) | AFIO_MAPR_SWJ_CFG_NO_JTAG_NO_SW);// Try to disable SWD AND JTAG so we can use those pins (not sure if this works).
- 
- #if defined(BUTTON_BANK) && defined (BUTTON_PIN) && defined (BUTTON_PRESSED_STATE)
-  SET_REG(GPIO_CR(BUTTON_BANK,BUTTON_PIN),(GPIO_CR(BUTTON_BANK,BUTTON_PIN) & crMask(BUTTON_PIN)) | CR_INPUT_PU_PD << CR_SHITF(BUTTON_PIN));
-  
-  gpio_write_bit(BUTTON_BANK, BUTTON_PIN,1-BUTTON_PRESSED_STATE);// set pulldown resistor in case there is no button.
- #endif
-  SET_REG(GPIO_CR(LED_BANK,LED_PIN),(GET_REG(GPIO_CR(LED_BANK,LED_PIN)) & crMask(LED_PIN)) | CR_OUTPUT_PP << CR_SHITF(LED_PIN));
+void setupLEDAndButton (void)
+{ 
+    // clear PA15, which is a now-disabled JTAG pin that is otherwise on because of JTAG hardware
+    SET_REG(GPIO_CR(GPIOA, 15),
+        (GET_REG(GPIO_CR(GPIOA, 15)) & crMask(15)) | CR_INPUT << CR_SHIFT(15));
+    gpio_write_bit(GPIOA, 15, 0);
+
+#if defined(BUTTON_BANK) && defined (BUTTON_PIN) && defined (BUTTON_ON_STATE)
+    // configure activation button
+    SET_REG(GPIO_CR(BUTTON_BANK, BUTTON_PIN),
+        (GPIO_CR(BUTTON_BANK, BUTTON_PIN) & crMask(BUTTON_PIN)) | CR_INPUT_PU_PD << CR_SHIFT(BUTTON_PIN));
+    gpio_write_bit(BUTTON_BANK, BUTTON_PIN, 1-BUTTON_ON_STATE);// set pulldown resistor in case there is no button.
+#endif
+
+#if defined(LED_PIN_K)
+    // LED is connected to two pins, so set cathode side low
+    SET_REG(GPIO_CR(LED_BANK, LED_PIN_K),
+        (GET_REG(GPIO_CR(LED_BANK, LED_PIN_K)) & crMask(LED_PIN_K)) | CR_OUTPUT_PP << CR_SHIFT(LED_PIN_K));
+    gpio_write_bit(LED_BANK, LED_PIN_K, 0);
+#endif
+
+    // configure LED
+    SET_REG(GPIO_CR(LED_BANK, LED_PIN),
+        (GET_REG(GPIO_CR(LED_BANK, LED_PIN)) & crMask(LED_PIN)) | CR_OUTPUT_PP << CR_SHIFT(LED_PIN));
 }
 
-void setupFLASH() {
-    /* configure the HSI oscillator */
-    if ((pRCC->CR & 0x01) == 0x00) {
-        u32 rwmVal = pRCC->CR;
+void setupFLASH()
+{
+    // configure the HSI oscillator
+    if ((GET_REG(RCC_CR) & 0x01) == 0) {
+        u32 rwmVal = GET_REG(RCC_CR);
         rwmVal |= 0x01;
-        pRCC->CR = rwmVal;
+        SET_REG(RCC_CR, rwmVal);
     }
 
-    /* wait for it to come on */
-    while ((pRCC->CR & 0x02) == 0x00) {}
+    // wait for it to come on
+    while ((GET_REG(RCC_CR) & 0x02) == 0);
 }
 
-bool checkUserCode(u32 usrAddr) {
+bool checkUserCode(u32 usrAddr)
+{
     u32 sp = *(vu32 *) usrAddr;
 
-    if ((sp & 0x2FFE0000) == 0x20000000) {
-        return (TRUE);
-    } else {
-        return (FALSE);
-    }
+    if ((sp & 0x2FFE0000) == 0x20000000) return (TRUE);
+    
+    return (FALSE);
 }
 
-void jumpToUser(u32 usrAddr) {
-    typedef void (*funcPtr)(void);
+void jumpToUser(u32 userAddr)
+{
+    // bootloaded reset vector
+    u32 jumpAddr = *(vu32 *)(userAddr + 0x04); /* reset ptr in vector table */
+    FuncPtr userMain = (FuncPtr)jumpAddr;
 
-    u32 jumpAddr = *(vu32 *)(usrAddr + 0x04); /* reset ptr in vector table */
-    funcPtr usrMain = (funcPtr) jumpAddr;
-
-    /* tear down all the dfu related setup */
+    // tear down all the dfu related setup
     // disable usb interrupts, clear them, turn off usb, set the disc pin
     // todo pick exactly what we want to do here, now its just a conservative
     flashLock();
@@ -197,17 +154,19 @@ void jumpToUser(u32 usrAddr) {
 #ifndef HAS_MAPLE_HARDWARE	
 	usbDsbBus();
 #endif
-	
-// Does nothing, as PC12 is not connected on teh Maple mini according to the schemmatic     setPin(GPIOC, 12); // disconnect usb from host. todo, macroize pin
-    systemReset(); // resets clocks and periphs, not core regs
 
+    // resets clocks and periphs, not core regs
+    systemReset();
 
-    __MSR_MSP(*(vu32 *) usrAddr);             /* set the users stack ptr */
+    // set user stack pointer
+    __MSR_MSP(*(vu32 *)userAddr);
 
-    usrMain();                                /* go! */
+    // let's go
+    userMain();                               
 }
 
-void nvicInit(NVIC_InitTypeDef *NVIC_InitStruct) {
+void nvicInit(NVIC_InitTypeDef *NVIC_InitStruct)
+{
     u32 tmppriority = 0x00;
     u32 tmpreg      = 0x00;
     u32 tmpmask     = 0x00;
@@ -242,7 +201,8 @@ void nvicInit(NVIC_InitTypeDef *NVIC_InitStruct) {
         (u32)0x01 << (NVIC_InitStruct->NVIC_IRQChannel & (u8)0x1F);
 }
 
-void nvicDisableInterrupts() {
+void nvicDisableInterrupts()
+{
     NVIC_TypeDef *rNVIC = (NVIC_TypeDef *) NVIC_BASE;
     rNVIC->ICER[0] = 0xFFFFFFFF;
     rNVIC->ICER[1] = 0xFFFFFFFF;
@@ -252,7 +212,8 @@ void nvicDisableInterrupts() {
     SET_REG(STK_CTRL, 0x04); /* disable the systick, which operates separately from nvic */
 }
 
-void systemHardReset(void) {
+void systemHardReset(void)
+{
     SCB_TypeDef *rSCB = (SCB_TypeDef *) SCB_BASE;
 
     /* Reset  */
@@ -264,7 +225,9 @@ void systemHardReset(void) {
     }
 }
 
-bool flashErasePage(u32 pageAddr) {
+/* flash functions */
+bool flashErasePage(u32 pageAddr)
+{
     u32 rwmVal = GET_REG(FLASH_CR);
     rwmVal = FLASH_CR_PER;
     SET_REG(FLASH_CR, rwmVal);
@@ -281,7 +244,9 @@ bool flashErasePage(u32 pageAddr) {
 
     return TRUE;
 }
-bool flashErasePages(u32 pageAddr, u16 n) {
+
+bool flashErasePages(u32 pageAddr, u16 n)
+{
     while (n-- > 0) {
         if (!flashErasePage(pageAddr + wTransferSize * n)) {
             return FALSE;
@@ -291,7 +256,8 @@ bool flashErasePages(u32 pageAddr, u16 n) {
     return TRUE;
 }
 
-bool flashWriteWord(u32 addr, u32 word) {
+bool flashWriteWord(u32 addr, u32 word)
+{
     vu16 *flashAddr = (vu16 *)addr;
     vu32 lhWord = (vu32)word & 0x0000FFFF;
     vu32 hhWord = ((vu32)word & 0xFFFF0000) >> 16;
@@ -318,49 +284,107 @@ bool flashWriteWord(u32 addr, u32 word) {
     return TRUE;
 }
 
-void flashLock() {
+void flashLock()
+{
     /* take down the HSI oscillator? it may be in use elsewhere */
 
     /* ensure all FPEC functions disabled and lock the FPEC */
     SET_REG(FLASH_CR, 0x00000080);
 }
 
-void flashUnlock() {
+void flashUnlock()
+{
     /* unlock the flash */
     SET_REG(FLASH_KEYR, FLASH_KEY1);
     SET_REG(FLASH_KEYR, FLASH_KEY2);
 }
 
-
-// Used to create the control register masking pattern, when setting control register mode.
-unsigned int crMask(int pin)
-{
-	unsigned int mask;
-	if (pin>=8)
-	{
-		pin-=8;
-	}
-	mask = 0x0F << (pin<<2);
-	return ~mask;
-}	
-
 #define FLASH_SIZE_REG 0x1FFFF7E0
 int getFlashEnd(void)
 {
-	unsigned short *flashSize = (unsigned short *) (FLASH_SIZE_REG);// Address register 
-	return ((int)(*flashSize & 0xffff) * 1024) + 0x08000000;
+    unsigned short *flashSize = (unsigned short *) (FLASH_SIZE_REG);// Address register 
+    return ((int)(*flashSize & 0xffff) * 1024) + 0x08000000;
 }
 
 int getFlashPageSize(void)
 {
 
-	unsigned short *flashSize = (unsigned short *) (FLASH_SIZE_REG);// Address register 
-	if ((*flashSize & 0xffff) > 128)
-	{
-		return 0x800;
+    unsigned short *flashSize = (unsigned short *) (FLASH_SIZE_REG);// Address register 
+    if ((*flashSize & 0xffff) > 128)
+    {
+        return 0x800;
+    }
+    else
+    {
+        return 0x400;
+    }
+}
+
+
+/* gpio functions */
+/**
+ * Used to create the control register masking pattern, when setting control register mode.
+ */
+unsigned int crMask(int pin)
+{
+	unsigned int mask;
+	if (pin>=8) {
+		pin-=8;
 	}
-	else
-	{
-		return 0x400;
-	}
+
+	mask = 0x0F << (pin << 2);
+	return ~mask;
+}	
+
+void gpio_write_bit(u32 bank, u8 pin, u8 val) {
+    val = !val;          // "set" bits are lower than "reset" bits  
+    SET_REG(GPIO_BSRR(bank), (1U << pin) << (16 * val));
+}
+
+bool readPin(u32 bank, u8 pin) {
+    // todo, implement read
+    if (GET_REG(GPIO_IDR(bank)) & (0x01 << pin)) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+bool readButtonState()
+{
+    bool state = FALSE;
+
+#if defined(BUTTON_BANK) && defined (BUTTON_PIN) && defined (BUTTON_ON_STATE)   
+    if (GET_REG(GPIO_IDR(BUTTON_BANK)) & (0x01 << BUTTON_PIN))  {
+        state = TRUE;
+    } 
+    
+    if (BUTTON_ON_STATE==0) {
+        state=!state;
+    }
+#endif
+
+    return state;
+}
+
+void strobePin(u32 bank, u8 pin, u8 count, u32 rate,u8 onState) 
+{
+    gpio_write_bit( bank,pin,1-onState);
+
+    u32 c;
+    while (count-- > 0) 
+    {
+        for (c = rate; c > 0; c--)
+        {
+            asm volatile("nop");
+        }
+        
+        gpio_write_bit( bank,pin,onState);
+        
+        for (c = rate; c > 0; c--)
+        {
+            asm volatile("nop");
+        }
+        gpio_write_bit( bank,pin,1-onState);
+    }
 }

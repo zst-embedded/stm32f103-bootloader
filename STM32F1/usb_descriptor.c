@@ -35,22 +35,20 @@
 #include "usb_descriptor.h"
 
 u8 u8_usbDeviceDescriptorDFU[18] = {
-    0x12,   /* bLength */
+      18,   /* bLength */
     0x01,   /* bDescriptorType */
-    0x00,   /* bcdUSB, version 1.00 */
-    0x01,
+    0x00,   /* bcdUSB, version 2.00 */
+    0x02,
     0x00,   /* bDeviceClass : See interface */
     0x00,   /* bDeviceSubClass : See interface*/
     0x00,   /* bDeviceProtocol : See interface */
     bMaxPacketSize, /* bMaxPacketSize0 0x40 = 64 */
-    VEND_ID0,   /* idVendor     (0110) */
-    VEND_ID1,
-
-    PROD_ID0,   /* idProduct (0x1001 or 1002) */
-    PROD_ID1,
-
-    0x01,   /* bcdDevice*/
-    0x02,
+    VEND_ID1,   /* idVendor     (0110) */
+    VEND_ID0,
+    PROD_ID1,   /* idProduct (0x1001 or 1002) */
+    PROD_ID0,
+    0x00,   /* bcdDevice*/
+    0x01,
     0x01,   /* iManufacturer : index of string Manufacturer  */
     0x02,   /* iProduct      : index of string descriptor of product*/
     0x03,   /* iSerialNumber : index of string serial number*/
@@ -59,25 +57,25 @@ u8 u8_usbDeviceDescriptorDFU[18] = {
 
 ONE_DESCRIPTOR usbDeviceDescriptorDFU = {
     u8_usbDeviceDescriptorDFU,
-    0x12
+    18
 };
 
 u8 u8_usbFunctionalDescriptor[9] = {
     /******************** DFU Functional Descriptor********************/
-    0x09,   /*blength = 7 Bytes*/
+       9,   /*blength = 9 Bytes*/
     0x21,   /* DFU Functional Descriptor*/
     0x03,   /*bmAttributes, bitCanDnload | bitCanUpload */
     0xFF,   /*DetachTimeOut= 255 ms*/
     0x00,
     (dummyTransferSize & 0x00FF),
     (dummyTransferSize & 0xFF00) >> 8, /* TransferSize = 1024 Byte*/
-    0x10,                          /* bcdDFUVersion = 1.1 */
+    0x10,                              /* bcdDFUVersion = 1.1 */
     0x01
 };
 
 ONE_DESCRIPTOR usbFunctionalDescriptor = {
     u8_usbFunctionalDescriptor,
-    0x09
+    9
 };
 
 #define u8_usbConfigDescriptorDFU_LENGTH 45
@@ -101,9 +99,7 @@ u8 u8_usbConfigDescriptorDFU[u8_usbConfigDescriptorDFU_LENGTH] = {
     0x00,   /* bNumEndpoints*/
     0xFE,   /* bInterfaceClass: DFU */
     0x01,   /* bInterfaceSubClass */
-
     0x02,   /* nInterfaceProtocol, switched to 0x02 while in dfu_mode */
-
     0x04,   /* iInterface: */
 
     /************ Descriptor of DFU interface 0 Alternate setting 1 *********/
@@ -114,9 +110,7 @@ u8 u8_usbConfigDescriptorDFU[u8_usbConfigDescriptorDFU_LENGTH] = {
     0x00,   /* bNumEndpoints*/
     0xFE,   /* bInterfaceClass: DFU */
     0x01,   /* bInterfaceSubClass */
-
     0x02,   /* nInterfaceProtocol, switched to 0x02 while in dfu_mode */
-
     0x05,   /* iInterface: */
 	
     /************ Descriptor of DFU interface 0 Alternate setting 2 *********/
@@ -127,11 +121,8 @@ u8 u8_usbConfigDescriptorDFU[u8_usbConfigDescriptorDFU_LENGTH] = {
     0x00,   /* bNumEndpoints*/
     0xFE,   /* bInterfaceClass: DFU */
     0x01,   /* bInterfaceSubClass */
-
     0x02,   /* nInterfaceProtocol, switched to 0x02 while in dfu_mode */
-
     0x06,   /* iInterface: */	
-	
 
     /******************** DFU Functional Descriptor********************/
     0x09,   /*blength = 7 Bytes*/
@@ -144,7 +135,7 @@ u8 u8_usbConfigDescriptorDFU[u8_usbConfigDescriptorDFU_LENGTH] = {
     0x10,                          /* bcdDFUVersion = 1.1 */
     0x01
     /***********************************************************/
-    /*36*/
+    /*45*/
 };
 
 ONE_DESCRIPTOR usbConfigDescriptorDFU = {
@@ -152,53 +143,53 @@ ONE_DESCRIPTOR usbConfigDescriptorDFU = {
     u8_usbConfigDescriptorDFU_LENGTH
 };
 
-#define USB_STR_LANG_ID_LEN 0x04
+#define USB_STR_LANG_ID_LEN 4
 u8 u8_usbStringLangId[USB_STR_LANG_ID_LEN] = {
     USB_STR_LANG_ID_LEN,
     0x03,
     0x09,
     0x04    /* LangID = 0x0409: U.S. English */
 };
-#define USB_VENDOR_STR_LEN 0x12
-u8 u8_usbStringVendor[USB_VENDOR_STR_LEN] = {
+
+static const u8 u8_usbStringVendor[USB_VENDOR_STR_LEN] = {
     USB_VENDOR_STR_LEN,
     0x03,
-    'L', 0, 'e', 0, 'a', 0, 'f', 0, 'L', 0, 'a', 0, 'b', 0, 's', 0
-};
-#define USB_PRODUCT_STR_LEN 0x14
-u8 u8_usbStringProduct[USB_PRODUCT_STR_LEN] = {
-    USB_PRODUCT_STR_LEN,
-    0x03,
-    'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0, ' ', 0, '0', 0, '0', 0, '3', 0
-};
-#define USB_SERIAL_STR_LEN 0x10
-u8 u8_usbStringSerial[USB_SERIAL_STR_LEN] = {
-    USB_SERIAL_STR_LEN,
-    0x03,
-    'L', 0, 'L', 0, 'M', 0, ' ', 0, '0', 0, '0', 0, '3', 0
+    USB_VENDOR_MSG_STR
 };
 
-	u8 u8_usbStringAlt0[ALT0_STR_LEN] = {
+static const u8 u8_usbStringProduct[USB_PRODUCT_STR_LEN] = {
+    USB_PRODUCT_STR_LEN,
+    0x03,
+    USB_PRODUCT_MSG_STR
+};
+
+static const u8 u8_usbStringSerial[USB_SERIAL_STR_LEN] = {
+    USB_SERIAL_STR_LEN,
+    0x03,
+    USB_SERIAL_MSG_STR
+};
+
+static const u8 u8_usbStringAlt0[ALT0_STR_LEN] = {
 	ALT0_STR_LEN,
 	0x03,
 	ALT0_MSG_STR
-	};
+};
 
 
-	u8 u8_usbStringAlt1[ALT1_STR_LEN] = {
+static const u8 u8_usbStringAlt1[ALT1_STR_LEN] = {
 	ALT1_STR_LEN,
 	0x03,
 	ALT1_MSG_STR	
-	};
+};
 
 
-	u8 u8_usbStringAlt2[ALT2_STR_LEN] = {
+static const u8 u8_usbStringAlt2[ALT2_STR_LEN] = {
 	ALT2_STR_LEN,
 	0x03,
 	ALT2_MSG_STR
-	};	
+};
 
-u8 u8_usbStringInterface = NULL;
+u8 u8_usbStringInterface = 0;
 
 ONE_DESCRIPTOR usbStringDescriptor[STR_DESC_LEN] = {
     { (u8 *)u8_usbStringLangId,  USB_STR_LANG_ID_LEN },

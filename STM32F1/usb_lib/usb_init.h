@@ -42,7 +42,7 @@ extern DEVICE_PROP*	pProperty;
 extern USER_STANDARD_REQUESTS *pUser_Standard_Requests;
 
 extern u16	SaveState ;
-extern u16 wInterrupt_Mask;
+extern volatile u16 wInterrupt_Mask;
 
 #endif /* __USB_INIT_H */
 

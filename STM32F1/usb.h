@@ -38,7 +38,7 @@
 #define ENDP2_TXADDR    0x100
 #define ENDP3_RXADDR    0x110
 
-#define bMaxPacketSize  0x40    /* 64B,  maximum for usb FS devices */
+#define bMaxPacketSize  0x40    /* 64b,  maximum for usb FS devices */
 //#define wTransferSize   FLASH_PAGE_SIZE  /* This is important, because transfers have to match with the flash page size, otherwise it erases a page before its finished copying to that page */
 #define dummyTransferSize 0x800
 int wTransferSize;
@@ -49,13 +49,13 @@ int wTransferSize;
 #define F_SUSPEND_ENABLED 1
 
 /* defines which interrupts are handled */
-#define ISR_MSK (CNTR_CTRM   |			\
-                 CNTR_WKUPM  |			\
-                 CNTR_SUSPM  |			\
-                 CNTR_ERRM   |			\
-                 CNTR_SOFM   |			\
-                 CNTR_ESOFM  |			\
-                 CNTR_RESETM			\
+#define ISR_MSK (ISTR_CTR   |		\
+                 ISTR_WKUP  |		\
+                 ISTR_SUSP  |		\
+                 ISTR_ERR   |		\
+                 ISTR_SOF   |		\
+                 ISTR_ESOF  |		\
+                 ISTR_RESET			\
                 )
 
 typedef enum _RESUME_STATE {
@@ -93,6 +93,8 @@ void usbInit(void);
 void usbReset(void);
 void usbStatusIn(void);
 void usbStatusOut(void);
+
+DEVICE_STATE usbGetState();
 
 RESULT usbDataSetup(u8 request);
 RESULT usbNoDataSetup(u8 request);

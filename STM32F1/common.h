@@ -33,12 +33,28 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
+
+#include "stm32_lib/stm32f10x_type.h"
+#include "stm32_lib/cortexm3_macro.h"
+
 #include "config.h"
 #include "hardware.h"
-#include "stm32f10x_type.h"
-#include "cortexm3_macro.h"
 #include "usb.h"
 
+#define VER_MAJOR 			'1'
+#define VER_MINOR 			'1'
+
+#define RESET_POR 			(1 << 27) 	// power-on reset
+#define RESET_EXT			(1 << 26) 	// reset button via reset pin
+#define RESET_ANY 			0xfe000000 	// all reset types
+
+
+#ifndef RESET_ACTIVATION
+#define RESET_ACTIVATION 	RESET_POR | RESET_EXT
+#endif
+
+
 typedef void (*FuncPtr)(void);
+
 
 #endif

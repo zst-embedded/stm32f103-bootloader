@@ -35,7 +35,7 @@ DEVICE_PROP *pProperty;
 /*  in this variable first and will be set to the EPRB or EPRA */
 /*  at the end of interrupt process */
 u16	SaveState ;
-u16  wInterrupt_Mask;
+volatile u16  wInterrupt_Mask;
 DEVICE_INFO	Device_Info;
 USER_STANDARD_REQUESTS  *pUser_Standard_Requests;
 

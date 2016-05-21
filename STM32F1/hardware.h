@@ -25,22 +25,26 @@
 #ifndef __HARDWARE_H
 #define __HARDWARE_H
 
+
 #include "stm32f10x_type.h"
 #include "cortexm3_macro.h"
 #include "common.h"
 
 /* macro'd register and peripheral definitions */
-#define RCC   ((u32)0x40021000)
-#define FLASH ((u32)0x40022000)
-#define GPIOA ((u32)0x40010800)
-#define GPIOB ((u32)0x40010C00)
-#define GPIOC ((u32)0x40011000)
-#define GPIOD ((u32)0x40011400)
-#define GPIOE ((u32)0x40011800)
-#define GPIOF ((u32)0x40011C00)
-#define GPIOG ((u32)0x40012000)
-#define AFIO_BASE              	((u32)0x40010000)
-#define AFIO_MAPR  				(AFIO_BASE + 0x04)
+#define PERIPH_BASE ((u32)0x40000000)
+#define APB1_BASE   PERIPH_BASE
+#define APB2_BASE   (PERIPH_BASE + 0x10000)
+
+#define RCC         ((u32)0x40021000)
+#define FLASH       ((u32)0x40022000)
+#define GPIOA       ((u32)0x40010800)
+#define GPIOB       ((u32)0x40010C00)
+#define GPIOC       ((u32)0x40011000)
+#define GPIOD       ((u32)0x40011400)
+
+
+#define AFIO_BASE   (APB2_BASE + 0x0000)
+#define AFIO_MAPR  	(AFIO_BASE + 0x04)
 
 
 #define RCC_CR      RCC
@@ -49,6 +53,7 @@
 #define RCC_AHBENR  (RCC + 0x14)
 #define RCC_APB2ENR (RCC + 0x18)
 #define RCC_APB1ENR (RCC + 0x1C)
+#define RCC_CSR     (RCC + 0x24)
 
 #define FLASH_ACR     (FLASH + 0x00)
 #define FLASH_KEYR    (FLASH + 0x04)
@@ -74,10 +79,10 @@
 #define GPIO_BSRR(port) (port+0x10)
 #define GPIO_CR(port,pin) (port + (0x04*(pin>7)))
 
-#define CR_OUTPUT_OD 		0x05
-#define CR_OUTPUT_PP		0x01	
-#define CR_INPUT 	  		0x04
-#define CR_INPUT_PU_PD		0x08
+#define CR_OUTPUT_OD 	0x05
+#define CR_OUTPUT_PP	0x01	
+#define CR_INPUT 	  	0x04
+#define CR_INPUT_PU_PD	0x08
 
 #define SCS_BASE   ((u32)0xE000E000)
 #define NVIC_BASE  (SCS_BASE + 0x0100)
@@ -127,32 +132,14 @@
 
 
 // more bit twiddling to set Control register bits
-#define CR_SHITF(pin) ((pin - 8*(pin>7))<<2)
+#define CR_SHIFT(pin) ((pin - 8*(pin>7))<<2)
 
 #define SET_REG(addr,val) do { *(vu32*)(addr)=val; } while(0)
-#define GET_REG(addr)     (*(vu32*)(addr))
+#define GET_REG(addr)        (*(vu32*)(addr))
 
 
-/* todo: there must be some major misunderstanding in how we access
-   regs. The direct access approach (GET_REG) causes the usb init to
-   fail upon trying to activate RCC_APB1 |= 0x00800000. However, using
-   the struct approach from ST, it works fine...temporarily switching
-   to that approach */
-typedef struct {
-    vu32 CR;
-    vu32 CFGR;
-    vu32 CIR;
-    vu32 APB2RSTR;
-    vu32 APB1RSTR;
-    vu32 AHBENR;
-    vu32 APB2ENR;
-    vu32 APB1ENR;
-    vu32 BDCR;
-    vu32 CSR;
-} RCC_RegStruct;
-#define pRCC ((RCC_RegStruct *) RCC)
 
-typedef struct {
+ typedef struct {
     vu32 ISER[2];
     u32  RESERVED0[30];
     vu32 ICER[2];
@@ -198,6 +185,7 @@ unsigned int crMask(int pin);
 
 bool readPin(u32 bank, u8 pin);
 void strobePin(u32 bank, u8 pin, u8 count, u32 rate,u8 onState);
+bool readButtonState();
 
 void systemHardReset(void);
 void systemReset(void);
@@ -217,5 +205,6 @@ void nvicDisableInterrupts(void);
 
 int getFlashEnd(void);
 int getFlashPageSize(void);
+
 	
 #endif

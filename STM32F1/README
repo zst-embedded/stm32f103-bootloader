@@ -1,7 +1,7 @@
 
 FILES -------------------------------------------------------------------------
 
-stm32lib/*
+stm32_lib/*
   - all the (possibly consolidated) stm32 lib and usb example code
 
 usb.c 
@@ -9,13 +9,12 @@ usb.c
     not "Attached". some low-level callbacks (low power mode, init, reset, 
     resume, etc).
 
-usb_callbacks.c 
-  - aka endpoints: handling data transfer when "Configured". calls out to 
-    application specific callbacks (i.e. DFU).
-
 usb_descriptor.c 
   - aka application descriptor; big static struct and callbacks for sending
-    the descriptor. 
+    the descriptor. TODO: stop using unicode strings directly, generate
+    with a function. will save a small amount of flash and everyone seems
+    to give a big shit about that these days. Also makes it easier to add
+    custom strings by an end-user adding a board.
 
 main.c
   - main loop and calling any hardware init stuff. timing hacks for EEPROM 
@@ -24,12 +23,19 @@ main.c
 
 hardware.c
   - init routines to setup clocks, interrupts, also destructor functions.
-    does not include USB stuff. EEPROM read/write functions.
+    does not include USB stuff. Flash read/write functions.
 
 dfu.c
-  - mostly the giant FSM case switch, also some USB endpoint callbacks
+  - mostly the giant FSM case switch, also some USB endpoint callbacks.
+    also doesn't reset state correctly at the end so you've got one shot
+    and you're done. probably not a bad idea but at least do it right...
+
+everything
+  - mostly shit
 
 TODO --------------------------------------------------------------------------
 
  * pack the structs
  * use sizeof() for usb application descriptor once structs are packed
+ * configure POR detect to allow different BOOTLOADER_WAIT times?
+ * actually know wtf are you doing when writing a bootloader

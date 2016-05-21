@@ -79,7 +79,6 @@ enum EP_BUF_NUM
 #define ISTR_SOF    (0x0200) /* Start Of Frame (clear-only bit) */
 #define ISTR_ESOF   (0x0100) /* Expected Start Of Frame (clear-only bit) */
 
-
 #define ISTR_DIR    (0x0010)  /* DIRection of transaction (read-only bit)  */
 #define ISTR_EP_ID  (0x000F)  /* EndPoint IDentifier (read-only bit)  */
 
@@ -214,8 +213,7 @@ enum EP_BUF_NUM
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-#define _SetEPType(bEpNum,wType) (_SetENDPOINT(bEpNum,\
-                                  ((_GetENDPOINT(bEpNum) & EP_T_MASK) | wType)))
+#define _SetEPType(bEpNum,wType) (_SetENDPOINT(bEpNum, ((_GetENDPOINT(bEpNum) & EP_T_MASK) | wType)))
 
 /*******************************************************************************
 * Macro Name     : GetEPType
@@ -296,10 +294,8 @@ enum EP_BUF_NUM
 * Output         : None.
 * Return         : TRUE = endpoint in stall condition.
 *******************************************************************************/
-#define _GetTxStallStatus(bEpNum) (_GetEPTxStatus(bEpNum) \
-                                   == EP_TX_STALL)
-#define _GetRxStallStatus(bEpNum) (_GetEPRxStatus(bEpNum) \
-                                   == EP_RX_STALL)
+#define _GetTxStallStatus(bEpNum) (_GetEPTxStatus(bEpNum) == EP_TX_STALL)
+#define _GetRxStallStatus(bEpNum) (_GetEPRxStatus(bEpNum) == EP_RX_STALL)
 
 /*******************************************************************************
 * Macro Name     : SetEP_KIND / ClearEP_KIND.
@@ -308,10 +304,8 @@ enum EP_BUF_NUM
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-#define _SetEP_KIND(bEpNum)    (_SetENDPOINT(bEpNum, \
-                                (_GetENDPOINT(bEpNum) | EP_KIND) & EPREG_MASK))
-#define _ClearEP_KIND(bEpNum)  (_SetENDPOINT(bEpNum, \
-                                (_GetENDPOINT(bEpNum) & EPKIND_MASK)))
+#define _SetEP_KIND(bEpNum)    (_SetENDPOINT(bEpNum, (_GetENDPOINT(bEpNum) & EPREG_MASK) | EP_KIND))
+#define _ClearEP_KIND(bEpNum)  (_SetENDPOINT(bEpNum, (_GetENDPOINT(bEpNum) & EPKIND_MASK)))
 
 /*******************************************************************************
 * Macro Name     : Set_Status_Out / Clear_Status_Out.
@@ -340,10 +334,8 @@ enum EP_BUF_NUM
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-#define _ClearEP_CTR_RX(bEpNum)   (_SetENDPOINT(bEpNum,\
-                                   _GetENDPOINT(bEpNum) & 0x7FFF & EPREG_MASK))
-#define _ClearEP_CTR_TX(bEpNum)   (_SetENDPOINT(bEpNum,\
-                                   _GetENDPOINT(bEpNum) & 0xFF7F & EPREG_MASK))
+#define _ClearEP_CTR_RX(bEpNum)   (_SetENDPOINT(bEpNum, (_GetENDPOINT(bEpNum) & EPREG_MASK) & 0x7FFF))
+#define _ClearEP_CTR_TX(bEpNum)   (_SetENDPOINT(bEpNum, (_GetENDPOINT(bEpNum) & EPREG_MASK) & 0xFF7F))
 
 /*******************************************************************************
 * Macro Name     : ToggleDTOG_RX / ToggleDTOG_TX .
@@ -352,10 +344,8 @@ enum EP_BUF_NUM
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-#define _ToggleDTOG_RX(bEpNum)    (_SetENDPOINT(bEpNum, \
-                                   EP_DTOG_RX | _GetENDPOINT(bEpNum) & EPREG_MASK))
-#define _ToggleDTOG_TX(bEpNum)    (_SetENDPOINT(bEpNum, \
-                                   EP_DTOG_TX | _GetENDPOINT(bEpNum) & EPREG_MASK))
+#define _ToggleDTOG_RX(bEpNum)    (_SetENDPOINT(bEpNum, EP_DTOG_RX | (_GetENDPOINT(bEpNum) & EPREG_MASK)))
+#define _ToggleDTOG_TX(bEpNum)    (_SetENDPOINT(bEpNum, EP_DTOG_TX | (_GetENDPOINT(bEpNum) & EPREG_MASK)))
 
 /*******************************************************************************
 * Macro Name     : ClearDTOG_RX / ClearDTOG_TX.
@@ -364,10 +354,8 @@ enum EP_BUF_NUM
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-#define _ClearDTOG_RX(bEpNum)  if((_GetENDPOINT(bEpNum) & EP_DTOG_RX) != 0)\
-    _ToggleDTOG_RX(bEpNum)
-#define _ClearDTOG_TX(bEpNum)  if((_GetENDPOINT(bEpNum) & EP_DTOG_TX) != 0)\
-    _ToggleDTOG_TX(bEpNum)
+#define _ClearDTOG_RX(bEpNum)  if((_GetENDPOINT(bEpNum) & EP_DTOG_RX) != 0) _ToggleDTOG_RX(bEpNum)
+#define _ClearDTOG_TX(bEpNum)  if((_GetENDPOINT(bEpNum) & EP_DTOG_TX) != 0) _ToggleDTOG_TX(bEpNum)
 /*******************************************************************************
 * Macro Name     : SetEPAddress.
 * Description    : Sets address in an endpoint register.
@@ -376,8 +364,7 @@ enum EP_BUF_NUM
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-#define _SetEPAddress(bEpNum,bAddr) _SetENDPOINT(bEpNum,\
-    _GetENDPOINT(bEpNum) & EPREG_MASK | bAddr)
+#define _SetEPAddress(bEpNum,bAddr) (_SetENDPOINT(bEpNum, (_GetENDPOINT(bEpNum) & EPREG_MASK) | bAddr))
 
 /*******************************************************************************
 * Macro Name     : GetEPAddress.

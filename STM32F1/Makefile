@@ -5,7 +5,7 @@ MCU      = cortex-m3
 SUBMDL   = stm32f103
 
 # toolchain (using code sourcery now)
-TCHAIN = arm-none-eabi
+TCHAIN   = arm-none-eabi
 THUMB    = -mthumb
 THUMB_IW = -mthumb-interwork
 
@@ -32,6 +32,7 @@ CFLAGS += -Wpointer-arith -Wswitch
 CFLAGS += -Wredundant-decls -Wreturn-type -Wshadow -Wunused
 CFLAGS += -Wa,-adhlns=$(BUILDDIR)/$(subst $(suffix $<),.lst,$<)
 CFLAGS += $(patsubst %,-I%,$(INCDIRS))
+CFLAGS += -flto
 
 # Aeembler Flags
 ASFLAGS = -Wa,-adhlns=$(BUILDDIR)/$(<:.s=.lst)#,--g$(DEBUG)
@@ -90,7 +91,7 @@ usb_mem.c
 
 STM32USBSRCS = $(patsubst %, $(ST_USB)/%,$(_STM32USBSRCS))
 
-SRCS = usb.c usb_callbacks.c usb_descriptor.c main.c hardware.c dfu.c
+SRCS = usb.c usb_descriptor.c main.c hardware.c dfu.c
 
 
 SRC = $(SRCS) $(STM32SRCS) $(STM32USBSRCS)
@@ -129,6 +130,8 @@ generic-pb7: begin gccversion build_generic-pb7 sizeafter finished  copy_generic
 generic-pb0: begin gccversion build_generic-pb0 sizeafter finished  copy_generic-pb0 end
 stbee :  begin gccversion build_stbee sizeafter finished  copy_stbee end
 naze32: begin gccversion build_naze32 sizeafter finished  copy_naze32 end
+andnxor-dc24-bender: begin gccversion build_andnxor-dc24-bender sizeafter finished  copy_andnxor-dc24-bender end
+tc-gripdaptor: begin gccversion build_tc-gripdaptor sizeafter finished  copy_tc-gripdaptor end
 build: elf bin lss sym
 
 build_maple-mini: TARGETFLAGS= -DTARGET_MAPLE_MINI
@@ -140,7 +143,7 @@ copy_maple_mini:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/maple_mini_boot20.bin
+	cp $(TARGET).bin binaries/dfu_boot20_maple_mini.bin
 	@echo
 
 build_maple-rev3: TARGETFLAGS= -DTARGET_MAPLE_REV3
@@ -152,7 +155,7 @@ copy_maple-rev3:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/maple_rev3_boot20.bin
+	cp $(TARGET).bin binaries/dfu_boot20_maple_rev3.bin
 	@echo
 
 build_maple-rev5: TARGETFLAGS= -DTARGET_MAPLE_REV5
@@ -163,7 +166,7 @@ copy_maple-rev5:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/maple_rev5_boot20.bin
+	cp $(TARGET).bin binaries/dfu_boot20_maple_rev5.bin
 	@echo
 	
 	
@@ -175,7 +178,7 @@ copy_generic-pc13:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pc13.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pc13.bin
 	@echo	
 	
 build_generic-pg15: TARGETFLAGS= -DTARGET_GENERIC_F103_PG15
@@ -186,7 +189,7 @@ copy_generic-pg15:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pg15.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pg15.bin
 	@echo		
 
 
@@ -198,7 +201,7 @@ copy_generic-pd2:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pd2.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pd2.bin
 	@echo	
 	
 	
@@ -210,7 +213,7 @@ copy_generic-pd1:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pd1.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pd1.bin
 	@echo		
 	
 build_generic-pa1: TARGETFLAGS= -DTARGET_GENERIC_F103_PA1
@@ -221,7 +224,7 @@ copy_generic-pa1:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pa1.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pa1.bin
 	@echo		
 
 build_generic-pb9: TARGETFLAGS= -DTARGET_GENERIC_F103_PB9
@@ -232,7 +235,7 @@ copy_generic-pb9:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pb9.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pb9.bin
 	@echo	
 	
 
@@ -244,7 +247,7 @@ copy_generic-pe2:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pe2.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pe2.bin
 	@echo		
 	
 	
@@ -256,7 +259,7 @@ copy_generic-pa9:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pa9.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pa9.bin
 	@echo		
 
 
@@ -268,7 +271,7 @@ copy_generic-pe5:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pe5.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pe5.bin
 	@echo		
 	
 	
@@ -280,7 +283,7 @@ copy_generic-pe5-button-pa0:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pe5_button_pa0.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pe5_btn_pa0.bin
 	@echo		
 	
 	
@@ -292,7 +295,7 @@ copy_generic-pb7:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pb7.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pb7.bin
 	@echo		
 build_generic-pb0: TARGETFLAGS= -DTARGET_GENERIC_F103_PB0
 # Set the linker script
@@ -302,7 +305,7 @@ copy_generic-pb0:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/generic_boot20_pb0.bin
+	cp $(TARGET).bin binaries/dfu_boot20_generic_pb0.bin
 	@echo		
 	
 	
@@ -314,7 +317,7 @@ copy_stbee:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/stbee_boot20.bin
+	cp $(TARGET).bin binaries/dfu_boot20_stbee.bin
 	@echo	
 
 build_naze32: TARGETFLAGS= -DTARGET_NAZE32
@@ -325,8 +328,30 @@ copy_naze32:
 	@echo
 	@echo "Copying to binaries folder"
 	@echo
-	cp $(TARGET).bin binaries/naze32_boot20.bin
+	cp $(TARGET).bin binaries/dfu_boot20_naze32.bin
+	@echo
+
+build_andnxor-dc24-bender: TARGETFLAGS= -DTARGET_ANDNXOR_DC24_BENDER
+# Set the linker script
+build_andnxor-dc24-bender: LDFLAGS +=-T$(ST_LIB)/c_only_md.ld
+build_andnxor-dc24-bender: elf bin lss sym
+copy_andnxor-dc24-bender: 
+	@echo
+	@echo "Copying to binaries folder"
+	@echo
+	cp $(TARGET).bin binaries/dfu_boot20_andnxor_dc24_bender.bin
 	@echo	
+
+build_tc-gripdaptor: TARGETFLAGS= -DTARGET_TC_GRIPDAPTOR
+# Set the linker script
+build_tc-gripdaptor: LDFLAGS +=-T$(ST_LIB)/c_only_md.ld
+build_tc-gripdaptor: elf bin lss sym
+copy_tc-gripdaptor: 
+	@echo
+	@echo "Copying to binaries folder"
+	@echo
+	cp $(TARGET).bin binaries/dfu_boot20_tc_gripdaptor.bin
+	@echo		
 	
 	
 bin: $(TARGET).bin
@@ -337,8 +362,8 @@ dfu: $(TARGET).bin
 	sudo dfu-util -d 0110:1001 -a 0 -D $(TARGET).bin
 
 begin:
-	mkdir -p build/stm32_lib
-	mkdir -p build/usb_lib
+#	mkdir -p build\stm32_lib
+#	mkdir -p build\usb_lib
 	@echo --
 	@echo $(MSG_BEGIN)
 	@echo $(COBJ)
