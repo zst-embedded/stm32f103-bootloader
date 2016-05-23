@@ -102,6 +102,8 @@ struct {
 } ResumeS;
 
 
+static RCC_TypeDef *RCC = (RCC_TypeDef *)RCC_BASE;
+
 
 void setupUSB (void)
 {
@@ -109,8 +111,8 @@ void setupUSB (void)
 #ifdef HAS_MAPLE_HARDWARE	
     // set up USB DISC pin as output open drain
     gpio_write_bit(USB_DISC_BANK, USB_DISC_PIN, 1);
-    SET_REG(GPIO_CR(USB_DISC_BANK, USB_DISC_PIN),
-            (GET_REG(
+    REG_SET(GPIO_CR(USB_DISC_BANK, USB_DISC_PIN),
+            (REG_GET(
                 GPIO_CR(USB_DISC_BANK,USB_DISC_PIN)) & crMask(USB_DISC_PIN))
                 | CR_OUTPUT_OD << CR_SHIFT(USB_DISC_PIN)
             );
@@ -129,8 +131,8 @@ void setupUSB (void)
 
     // set up pin in host disconnected state
     gpio_write_bit(USB_DISC_BANK, USB_DISC_PIN, 0);
-    SET_REG(GPIO_CR(USB_DISC_BANK, USB_DISC_PIN),
-        (GET_REG(
+    REG_SET(GPIO_CR(USB_DISC_BANK, USB_DISC_PIN),
+        (REG_GET(
             GPIO_CR(USB_DISC_BANK, USB_DISC_PIN)) & crMask(USB_DISC_PIN))
             | CR_OUTPUT_PP << CR_SHIFT(USB_DISC_PIN)
         );
@@ -252,7 +254,7 @@ RESULT usbPowerOn(void)
     u16 wRegVal;
 
     // Enable USB clock
-    SET_REG(RCC_APB1ENR, (GET_REG(RCC_APB1ENR) | RCC_APB1ENR_USB_CLK));
+    RCC->APB1ENR |= RCC_APB1ENR_USB_CLK;
 
     wRegVal = CNTR_FRES;
     _SetCNTR(wRegVal);
@@ -295,7 +297,7 @@ RESULT usbPowerOff(void) {
 #endif
 
     // Disable USB clock
-    SET_REG(RCC_APB1ENR, (GET_REG(RCC_APB1ENR) & (~RCC_APB1ENR_USB_CLK)));
+    RCC->APB1ENR &= ~RCC_APB1ENR_USB_CLK;
 
     return USB_SUCCESS;
 }

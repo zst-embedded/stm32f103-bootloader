@@ -33,100 +33,108 @@
 #include "hardware.h"
 
 
+static RCC_TypeDef *RCC = (RCC_TypeDef *)RCC_BASE;
+static FLASH_TypeDef *FLASH = (FLASH_TypeDef *)FLASH_BASE;
+static SCB_TypeDef *SCB = (SCB_TypeDef *)SCB_BASE;
+static NVIC_TypeDef *NVIC = (NVIC_TypeDef *)NVIC_BASE;
+
+
 /* system init shit */
 void systemReset(void)
 {
-    SET_REG(RCC_CR, GET_REG(RCC_CR)     | 0x00000001);
-    SET_REG(RCC_CFGR, GET_REG(RCC_CFGR) & 0xF8FF0000);
-    SET_REG(RCC_CR, GET_REG(RCC_CR)     & 0xFEF6FFFF);
-    SET_REG(RCC_CR, GET_REG(RCC_CR)     & 0xFFFBFFFF);
-    SET_REG(RCC_CFGR, GET_REG(RCC_CFGR) & 0xFF80FFFF);
-
-    SET_REG(RCC_CIR, 0x00000000);  /* disable all RCC interrupts */
+    /* TODO: say what this does */
+    RCC->CR   |= 0x00000001;
+    RCC->CFGR &= 0xF8FF0000;
+    RCC->CR   &= 0xFEF6FFFF;
+    RCC->CR   &= 0xFFFBFFFF;
+    RCC->CFGR &= 0xFF80FFFF;
+    
+    /* disable all RCC interrupts */
+    RCC->CIR   = 0x00000000;
 }
 
 void setupCLK(void)
 {
 	unsigned int StartUpCounter=0;
-    /* enable HSE */
-    SET_REG(RCC_CR, GET_REG(RCC_CR) | 0x00010001);
-    while ((GET_REG(RCC_CR) & 0x00020000) == 0); /* for it to come on */
+    
+    // enable HSE
+    RCC->CR |= 0x00010001;
 
-    /* enable flash prefetch buffer */
-    SET_REG(FLASH_ACR, 0x00000012);
+    // and wait for it to come on
+    while ((RCC->CR & 0x00020000) == 0);
+
+    // enable flash prefetch buffer
+    FLASH->ACR = 0x00000012;
 	
-     /* Configure PLL */
+    // Configure PLL
 #ifdef XTAL12M
-    SET_REG(RCC_CFGR, GET_REG(RCC_CFGR) | 0x00110400); /* pll=72Mhz(x6),APB1=36Mhz,AHB=72Mhz */
+    RCC->CFGR |= 0x00110400; /* pll=72Mhz(x6),APB1=36Mhz,AHB=72Mhz */
 #else
-    SET_REG(RCC_CFGR, GET_REG(RCC_CFGR) | 0x001D0400); /* pll=72Mhz(x9),APB1=36Mhz,AHB=72Mhz */
-#endif	
+    RCC->CFGR |= 0x001D0400; /* pll=72Mhz(x9),APB1=36Mhz,AHB=72Mhz */
+#endif
 
-    /* enable the pll */
-    SET_REG(RCC_CR, GET_REG(RCC_CR)     | 0x01000000);
-	
+    // enable the pll
+    RCC->CR |= 0x01000000;
 
-#if !defined  (HSE_STARTUP_TIMEOUT)
+#ifndef HSE_STARTUP_TIMEOUT
   #define HSE_STARTUP_TIMEOUT    ((unsigned int)0x0500) /*!< Time out for HSE start up */
 #endif /* HSE_STARTUP_TIMEOUT */   
 
     StartUpCounter = HSE_STARTUP_TIMEOUT;
-    while ((GET_REG(RCC_CR) & 0x03000000) == 0 && --StartUpCounter);
+    while (((RCC->CR & 0x03000000) == 0) && --StartUpCounter);
 	
 	if (!StartUpCounter) {
 		// HSE has not started. Try restarting the processor
 		systemHardReset(); 
 	}
 	
-    /* Set SYSCLK as PLL */
-    SET_REG(RCC_CFGR, GET_REG(RCC_CFGR) | 0x00000002);
-    while ((GET_REG(RCC_CFGR) & 0x00000008) == 0); /* wait for it to come on */
+    // Set SYSCLK as PLL
+    RCC->CFGR |= 0x00000002;
+    // and wait for it to come on
+    while ((RCC->CFGR & 0x00000008) == 0); 
 
-    	
     // Enable All GPIO channels (A to E), AFIO clock; disable any other clocks
-    SET_REG(RCC_APB2ENR, 0x0000007d);
+    RCC->APB2ENR = 0x0000007d;
     // disable JTAG pins
-    SET_REG(AFIO_MAPR,   AFIO_MAPR_SWJ_CFG_NO_JTAG_SW);
+    REG_SET(AFIO_MAPR, AFIO_MAPR_SWJ_CFG_NO_JTAG_SW);
 }
 
 
 void setupLEDAndButton (void)
 { 
     // clear PA15, which is a now-disabled JTAG pin that is otherwise on because of JTAG hardware
-    SET_REG(GPIO_CR(GPIOA, 15),
-        (GET_REG(GPIO_CR(GPIOA, 15)) & crMask(15)) | CR_INPUT << CR_SHIFT(15));
+    REG_SET(GPIO_CR(GPIOA, 15),
+        (REG_GET(GPIO_CR(GPIOA, 15)) & crMask(15)) | CR_INPUT << CR_SHIFT(15));
     gpio_write_bit(GPIOA, 15, 0);
 
-#if defined(BUTTON_BANK) && defined (BUTTON_PIN) && defined (BUTTON_ON_STATE)
+#if defined(BUTTON_BANK) && defined(BUTTON_PIN) && defined(BUTTON_ON_STATE)
     // configure activation button
-    SET_REG(GPIO_CR(BUTTON_BANK, BUTTON_PIN),
+    REG_SET(GPIO_CR(BUTTON_BANK, BUTTON_PIN),
         (GPIO_CR(BUTTON_BANK, BUTTON_PIN) & crMask(BUTTON_PIN)) | CR_INPUT_PU_PD << CR_SHIFT(BUTTON_PIN));
     gpio_write_bit(BUTTON_BANK, BUTTON_PIN, 1-BUTTON_ON_STATE);// set pulldown resistor in case there is no button.
 #endif
 
 #if defined(LED_PIN_K)
     // LED is connected to two pins, so set cathode side low
-    SET_REG(GPIO_CR(LED_BANK, LED_PIN_K),
-        (GET_REG(GPIO_CR(LED_BANK, LED_PIN_K)) & crMask(LED_PIN_K)) | CR_OUTPUT_PP << CR_SHIFT(LED_PIN_K));
+    REG_SET(GPIO_CR(LED_BANK, LED_PIN_K),
+        (REG_GET(GPIO_CR(LED_BANK, LED_PIN_K)) & crMask(LED_PIN_K)) | CR_OUTPUT_PP << CR_SHIFT(LED_PIN_K));
     gpio_write_bit(LED_BANK, LED_PIN_K, 0);
 #endif
 
     // configure LED
-    SET_REG(GPIO_CR(LED_BANK, LED_PIN),
-        (GET_REG(GPIO_CR(LED_BANK, LED_PIN)) & crMask(LED_PIN)) | CR_OUTPUT_PP << CR_SHIFT(LED_PIN));
+    REG_SET(GPIO_CR(LED_BANK, LED_PIN),
+        (REG_GET(GPIO_CR(LED_BANK, LED_PIN)) & crMask(LED_PIN)) | CR_OUTPUT_PP << CR_SHIFT(LED_PIN));
 }
 
 void setupFLASH()
 {
     // configure the HSI oscillator
-    if ((GET_REG(RCC_CR) & 0x01) == 0) {
-        u32 rwmVal = GET_REG(RCC_CR);
-        rwmVal |= 0x01;
-        SET_REG(RCC_CR, rwmVal);
+    if ((RCC->CR & 0x01) == 0) {
+        RCC->CR |= 0x01;
     }
 
     // wait for it to come on
-    while ((GET_REG(RCC_CR) & 0x02) == 0);
+    while ((RCC->CR & 0x02) == 0);
 }
 
 bool checkUserCode(u32 usrAddr)
@@ -173,12 +181,8 @@ void nvicInit(NVIC_InitTypeDef *NVIC_InitStruct)
     u32 tmppre      = 0;
     u32 tmpsub      = 0x0F;
 
-    SCB_TypeDef *rSCB = (SCB_TypeDef *) SCB_BASE;
-    NVIC_TypeDef *rNVIC = (NVIC_TypeDef *) NVIC_BASE;
-
-
     /* Compute the Corresponding IRQ Priority --------------------------------*/
-    tmppriority = (0x700 - (rSCB->AIRCR & (u32)0x700)) >> 0x08;
+    tmppriority = (0x700 - (SCB->AIRCR & (u32)0x700)) >> 0x08;
     tmppre = (0x4 - tmppriority);
     tmpsub = tmpsub >> tmppriority;
 
@@ -188,36 +192,35 @@ void nvicInit(NVIC_InitTypeDef *NVIC_InitStruct)
     tmppriority = tmppriority << 0x04;
     tmppriority = ((u32)tmppriority) << ((NVIC_InitStruct->NVIC_IRQChannel & (u8)0x03) * 0x08);
 
-    tmpreg = rNVIC->IPR[(NVIC_InitStruct->NVIC_IRQChannel >> 0x02)];
+    tmpreg = NVIC->IPR[(NVIC_InitStruct->NVIC_IRQChannel >> 0x02)];
     tmpmask = (u32)0xFF << ((NVIC_InitStruct->NVIC_IRQChannel & (u8)0x03) * 0x08);
     tmpreg &= ~tmpmask;
     tmppriority &= tmpmask;
     tmpreg |= tmppriority;
 
-    rNVIC->IPR[(NVIC_InitStruct->NVIC_IRQChannel >> 0x02)] = tmpreg;
+    NVIC->IPR[(NVIC_InitStruct->NVIC_IRQChannel >> 0x02)] = tmpreg;
 
     /* Enable the Selected IRQ Channels --------------------------------------*/
-    rNVIC->ISER[(NVIC_InitStruct->NVIC_IRQChannel >> 0x05)] =
+    NVIC->ISER[(NVIC_InitStruct->NVIC_IRQChannel >> 0x05)] =
         (u32)0x01 << (NVIC_InitStruct->NVIC_IRQChannel & (u8)0x1F);
 }
 
 void nvicDisableInterrupts()
 {
-    NVIC_TypeDef *rNVIC = (NVIC_TypeDef *) NVIC_BASE;
-    rNVIC->ICER[0] = 0xFFFFFFFF;
-    rNVIC->ICER[1] = 0xFFFFFFFF;
-    rNVIC->ICPR[0] = 0xFFFFFFFF;
-    rNVIC->ICPR[1] = 0xFFFFFFFF;
+    NVIC->ICER[0] = 0xFFFFFFFF;
+    NVIC->ICER[1] = 0xFFFFFFFF;
+    NVIC->ICPR[0] = 0xFFFFFFFF;
+    NVIC->ICPR[1] = 0xFFFFFFFF;
 
-    SET_REG(STK_CTRL, 0x04); /* disable the systick, which operates separately from nvic */
+    REG_SET(STK_CTRL, 0x04); /* disable the systick, which operates separately from nvic */
 }
 
 void systemHardReset(void)
 {
-    SCB_TypeDef *rSCB = (SCB_TypeDef *) SCB_BASE;
+    
 
     /* Reset  */
-    rSCB->AIRCR = (u32)AIRCR_RESET_REQ;
+    SCB->AIRCR = (u32)AIRCR_RESET_REQ;
 
     /*  should never get here */
     while (1) {
@@ -228,19 +231,15 @@ void systemHardReset(void)
 /* flash functions */
 bool flashErasePage(u32 pageAddr)
 {
-    u32 rwmVal = GET_REG(FLASH_CR);
-    rwmVal = FLASH_CR_PER;
-    SET_REG(FLASH_CR, rwmVal);
+    FLASH->CR = FLASH_CR_PER;
 
-    while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {}
-    SET_REG(FLASH_AR, pageAddr);
-    SET_REG(FLASH_CR, FLASH_CR_START | FLASH_CR_PER);
-    while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {}
+    while (FLASH->SR & FLASH_SR_BSY);
+    FLASH->AR = pageAddr;
+    FLASH->CR = FLASH_CR_START | FLASH_CR_PER;
+    while (FLASH->SR & FLASH_SR_BSY);
 
     /* todo: verify the page was erased */
-
-    rwmVal = 0x00;
-    SET_REG(FLASH_CR, rwmVal);
+    FLASH->CR = 0;
 
     return TRUE;
 }
@@ -262,19 +261,17 @@ bool flashWriteWord(u32 addr, u32 word)
     vu32 lhWord = (vu32)word & 0x0000FFFF;
     vu32 hhWord = ((vu32)word & 0xFFFF0000) >> 16;
 
-    u32 rwmVal = GET_REG(FLASH_CR);
-    SET_REG(FLASH_CR, FLASH_CR_PG);
+    FLASH->CR = FLASH_CR_PG;
 
     /* apparently we need not write to FLASH_AR and can
        simply do a native write of a half word */
-    while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {}
+    while (FLASH->SR & FLASH_SR_BSY);
     *(flashAddr + 0x01) = (vu16)hhWord;
-    while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {}
+    while (FLASH->SR & FLASH_SR_BSY);
     *(flashAddr) = (vu16)lhWord;
-    while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {}
+    while (FLASH->SR & FLASH_SR_BSY);
 
-    rwmVal &= 0xFFFFFFFE;
-    SET_REG(FLASH_CR, rwmVal);
+    FLASH->CR &= 0xFFFFFFFE;
 
     /* verify the write */
     if (*(vu32 *)addr != word) {
@@ -289,33 +286,30 @@ void flashLock()
     /* take down the HSI oscillator? it may be in use elsewhere */
 
     /* ensure all FPEC functions disabled and lock the FPEC */
-    SET_REG(FLASH_CR, 0x00000080);
+    FLASH->CR = 0x00000080;
 }
 
 void flashUnlock()
 {
     /* unlock the flash */
-    SET_REG(FLASH_KEYR, FLASH_KEY1);
-    SET_REG(FLASH_KEYR, FLASH_KEY2);
+    FLASH->KEYR = FLASH_KEY1;
+    FLASH->KEYR = FLASH_KEY2;
 }
 
 #define FLASH_SIZE_REG 0x1FFFF7E0
 int getFlashEnd(void)
 {
-    unsigned short *flashSize = (unsigned short *) (FLASH_SIZE_REG);// Address register 
+    unsigned short *flashSize = (unsigned short *)FLASH_SIZE_REG;// Address register 
     return ((int)(*flashSize & 0xffff) * 1024) + 0x08000000;
 }
 
 int getFlashPageSize(void)
 {
 
-    unsigned short *flashSize = (unsigned short *) (FLASH_SIZE_REG);// Address register 
-    if ((*flashSize & 0xffff) > 128)
-    {
+    unsigned short *flashSize = (unsigned short *)FLASH_SIZE_REG;// Address register 
+    if ((*flashSize & 0xffff) > 128) {
         return 0x800;
-    }
-    else
-    {
+    } else {
         return 0x400;
     }
 }
@@ -338,12 +332,12 @@ unsigned int crMask(int pin)
 
 void gpio_write_bit(u32 bank, u8 pin, u8 val) {
     val = !val;          // "set" bits are lower than "reset" bits  
-    SET_REG(GPIO_BSRR(bank), (1U << pin) << (16 * val));
+    REG_SET(GPIO_BSRR(bank), (1U << pin) << (16 * val));
 }
 
 bool readPin(u32 bank, u8 pin) {
     // todo, implement read
-    if (GET_REG(GPIO_IDR(bank)) & (0x01 << pin)) {
+    if (REG_GET(GPIO_IDR(bank)) & (0x01 << pin)) {
         return TRUE;
     } else {
         return FALSE;
@@ -355,12 +349,12 @@ bool readButtonState()
     bool state = FALSE;
 
 #if defined(BUTTON_BANK) && defined (BUTTON_PIN) && defined (BUTTON_ON_STATE)   
-    if (GET_REG(GPIO_IDR(BUTTON_BANK)) & (0x01 << BUTTON_PIN))  {
+    if (REG_GET(GPIO_IDR(BUTTON_BANK)) & (0x01 << BUTTON_PIN))  {
         state = TRUE;
     } 
     
     if (BUTTON_ON_STATE==0) {
-        state=!state;
+        state = !state;
     }
 #endif
 
@@ -369,22 +363,20 @@ bool readButtonState()
 
 void strobePin(u32 bank, u8 pin, u8 count, u32 rate,u8 onState) 
 {
-    gpio_write_bit( bank,pin,1-onState);
+    gpio_write_bit(bank, pin, 1-onState);
 
     u32 c;
-    while (count-- > 0) 
-    {
-        for (c = rate; c > 0; c--)
-        {
+    while (count-- > 0) {
+        for (c = rate; c > 0; c--) {
             asm volatile("nop");
         }
         
-        gpio_write_bit( bank,pin,onState);
+        gpio_write_bit(bank, pin, onState);
         
-        for (c = rate; c > 0; c--)
-        {
+        for (c = rate; c > 0; c--) {
             asm volatile("nop");
         }
-        gpio_write_bit( bank,pin,1-onState);
+
+        gpio_write_bit(bank, pin, 1 - onState);
     }
 }
