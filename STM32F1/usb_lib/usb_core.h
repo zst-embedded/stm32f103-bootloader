@@ -35,8 +35,7 @@ typedef enum _CONTROL_STATE {
 typedef struct OneDescriptor {
     u8 *Descriptor;
     u16 Descriptor_Size;
-}
-ONE_DESCRIPTOR, *PONE_DESCRIPTOR;
+} ONE_DESCRIPTOR, *PONE_DESCRIPTOR;
 /* All the request process routines return a value of this type
    If the return value is not SUCCESS or NOT_READY,
    the software will STALL the correspond endpoint */
@@ -84,8 +83,7 @@ typedef struct _ENDPOINT_INFO {
 typedef struct _DEVICE {
     u8 Total_Endpoint;     /* Number of endpoints that are used */
     u8 Total_Configuration;/* Number of configuration available */
-}
-DEVICE;
+} DEVICE;
 
 typedef union {
     u16 w;
@@ -93,8 +91,7 @@ typedef union {
         /* Little Endian */
         u8 bb0;
         u8 bb1;
-    }
-    bw;
+    } bw;
 } u16_u8;
 
 typedef struct _DEVICE_INFO {
@@ -181,8 +178,7 @@ typedef struct _USER_STANDARD_REQUESTS {
     void (*User_SetEndPointFeature)(void);     /* Set Endpoint Feature */
     void (*User_SetDeviceFeature)(void);       /* Set Device Feature */
     void (*User_SetDeviceAddress)(void);       /* Set Device Address */
-}
-USER_STANDARD_REQUESTS;
+} USER_STANDARD_REQUESTS;
 
 /* Exported constants --------------------------------------------------------*/
 #define Type_Recipient (pInformation->USBbmRequestType & (REQUEST_TYPE | RECIPIENT))
