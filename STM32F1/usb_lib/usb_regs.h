@@ -385,8 +385,6 @@ enum EP_BUF_NUM {
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-#define _SetEPTxAddr(bEpNum,wAddr) (*(volatile u32 *)_pEPTxAddr(bEpNum) = ((wAddr >> 1) << 1))
-#define _SetEPRxAddr(bEpNum,wAddr) (*(volatile u32 *)_pEPRxAddr(bEpNum) = ((wAddr >> 1) << 1))
 
 /*******************************************************************************
 * Macro Name     : GetEPTxAddr / GetEPRxAddr.
