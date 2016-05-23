@@ -19,20 +19,18 @@
 
 /* Includes ------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-typedef enum _EP_DBUF_DIR
-{
-  /* double buffered endpoint direction */
-  EP_DBUF_ERR,
-  EP_DBUF_OUT,
-  EP_DBUF_IN
-}EP_DBUF_DIR;
+typedef enum _EP_DBUF_DIR {
+    /* double buffered endpoint direction */
+    EP_DBUF_ERR,
+    EP_DBUF_OUT,
+    EP_DBUF_IN
+} EP_DBUF_DIR;
 
 /* endpoint buffer number */
-enum EP_BUF_NUM
-{
-  EP_NOBUF,
-  EP_BUF0,
-  EP_BUF1
+enum EP_BUF_NUM {
+    EP_NOBUF,
+    EP_BUF0,
+    EP_BUF1
 };
 
 /* Exported constants --------------------------------------------------------*/
