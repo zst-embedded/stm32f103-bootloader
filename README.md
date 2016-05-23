@@ -1,19 +1,19 @@
 # STM32F103 DFU Bootloader
 
-*Please Note: Must use GCC 4.8, as 4.9 and later have more aggressive optimisation which causes hardware registers not be read correctly and consequently the bootloader does not work.*
+*Please Note: The GCC 5.x series does not work with this firmware. GCC 4.8 and 4.9 have been tested to work properly. There seems to be bug in this code that is not triggered by earlier GCC versions. I haven't found it yet, but if you want to help and want a hint, compiling with usb.c:usbReset optimization at -O0 will result in working USB...*
 
 
-This is a DFU bootloader for STM32F103. I don't know how compliant it is, but it works with certain versions of dfu_util. The end goal is to provide a DFU-compliant bootloader that is both well written and has configurable entry options to cater to the target. This project is very far from that but it does work today.
+This is a DFU bootloader for STM32F103. I don't know how DFU-compliant it is, but it works with certain versions of dfu_util. The end goal is to provide a DFU-compliant bootloader that is both well written and has configurable entry options to cater to the target. This project is very far from the former and only has small amounts of the latter, but it does work today.
 
 This repo is a derivation of https://github.com/jonatanolofsson/maple-bootloader (mini-boot branch) which is in turn a derivation of the maple-bootloader created by Leaflabs http://github.com/leaflabs/maple-bootloader
 
 
-Note: The bootloader has a DFU - AltID for RAM uploads, however this returns an error the host attempts to uplaod to this AltID. The AltID was kept, to allow backwards compatibility with anyone still using the old Maple IDE which has a upload to RAM option. Unless anyone cares to reimplement this, it will probably be removed in the future.
+Note: The bootloader has a DFU - AltID for RAM uploads, however this returns an error the host attempts to upload to this AltID. The AltID was kept because I am used to using AltID 2 to send my firmware, and who wants a gap? Unless anyone cares to reimplement this, it will probably be removed in the future.
 
 
-Note: On "generic" boards, the USB reset (to force re-enumeration by the host), is triggered by reconfiguring USB line D+ (typically on PA12) into GPIO mode, and driving PA12 low for a short period, before setting the pin back to its USB operational mode.
+Note: On "generic" boards, the USB reset (to force re-enumeration by the host) is triggered by reconfiguring USB line D+ (typically on PA12) into GPIO mode, and driving PA12 low for a short period, before setting the pin back to its USB operational mode. This is hacky as all hell, and this explanation may no longer be accurate, either.
 
-This system to reset the USB was written by @Victor_pv. It has preliminary fixes by @trueserve but really needs a closer look.
+This system to reset the USB was written by @Victor_pv.
 
 Note: There are multiple build targets for "generic" STM32F103 boards, because each vendor seems to have the "LED" on a different port/pin, and the bootloader flashes the LED to indicate the current operation / state. Bootloader entry buttons are also on various pins, or sometimes are switches, or aren't present at all.
 
@@ -25,7 +25,7 @@ Boards which have the Maple USB reset hardware need to defined HAS_MAPLE_HARDWAR
 #####Other improvements on the original Maple bootloader
 
 1. Smaller footprint - now fits within 8k
-2. Additional DFU AltID upload type was added, which allows the sketch to be loaded at 0x8002000 instead of 0x8005000
+2. Additional DFU AltID upload type was added, which allows the sketch to be loaded at 0x8002000
 
 
 ##### Building on Linux

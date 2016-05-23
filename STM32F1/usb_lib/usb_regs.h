@@ -197,8 +197,7 @@ enum EP_BUF_NUM {
 #define _GetBTABLE() ((volatile u16) *BTABLE)
 
 /* SetENDPOINT */
-#define _SetENDPOINT(bEpNum,wRegValue)  (*(EP0REG + bEpNum)= \
-    (u16)wRegValue)
+#define _SetENDPOINT(bEpNum,wRegValue)  (*(EP0REG + bEpNum) = (u16)wRegValue)
 
 /* GetENDPOINT */
 #define _GetENDPOINT(bEpNum)        ((volatile u16)(*(EP0REG + bEpNum)))
@@ -373,9 +372,9 @@ enum EP_BUF_NUM {
 *******************************************************************************/
 #define _GetEPAddress(bEpNum) ((volatile u8)(_GetENDPOINT(bEpNum) & EPADDR_FIELD))
 
-#define _pEPTxAddr(bEpNum) ((volatile u32 *)((_GetBTABLE()+bEpNum*8  )*2 + PMAAddr))
+#define _pEPTxAddr(bEpNum)  ((volatile u32 *)((_GetBTABLE()+bEpNum*8  )*2 + PMAAddr))
 #define _pEPTxCount(bEpNum) ((volatile u32 *)((_GetBTABLE()+bEpNum*8+2)*2 + PMAAddr))
-#define _pEPRxAddr(bEpNum) ((volatile u32 *)((_GetBTABLE()+bEpNum*8+4)*2 + PMAAddr))
+#define _pEPRxAddr(bEpNum)  ((volatile u32 *)((_GetBTABLE()+bEpNum*8+4)*2 + PMAAddr))
 #define _pEPRxCount(bEpNum) ((volatile u32 *)((_GetBTABLE()+bEpNum*8+6)*2 + PMAAddr))
 
 /*******************************************************************************
@@ -386,8 +385,8 @@ enum EP_BUF_NUM {
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-#define _SetEPTxAddr(bEpNum,wAddr) (*_pEPTxAddr(bEpNum) = ((wAddr >> 1) << 1))
-#define _SetEPRxAddr(bEpNum,wAddr) (*_pEPRxAddr(bEpNum) = ((wAddr >> 1) << 1))
+#define _SetEPTxAddr(bEpNum,wAddr) (*(volatile u32 *)_pEPTxAddr(bEpNum) = ((wAddr >> 1) << 1))
+#define _SetEPRxAddr(bEpNum,wAddr) (*(volatile u32 *)_pEPRxAddr(bEpNum) = ((wAddr >> 1) << 1))
 
 /*******************************************************************************
 * Macro Name     : GetEPTxAddr / GetEPRxAddr.

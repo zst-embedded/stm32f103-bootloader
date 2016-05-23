@@ -251,17 +251,13 @@ void usbResume(RESUME_STATE eResumeSetVal)
 
 RESULT usbPowerOn(void)
 {
-    u16 wRegVal;
-
     // Enable USB clock
     RCC->APB1ENR |= RCC_APB1ENR_USB_CLK;
 
-    wRegVal = CNTR_FRES;
-    _SetCNTR(wRegVal);
-
-    wInterrupt_Mask = 0;
-    _SetCNTR(wInterrupt_Mask);
+    _SetCNTR(CNTR_FRES);
+    _SetCNTR(0);
     _SetISTR(0);
+
     wInterrupt_Mask = CNTR_RESETM | CNTR_SUSPM | CNTR_WKUPM; /* the bare minimum */
     _SetCNTR(wInterrupt_Mask);
 
@@ -313,7 +309,8 @@ void usbInit(void)
     wInterrupt_Mask = ISR_MSK;
     _SetCNTR(wInterrupt_Mask);
 
-    usbEnbISR(); /* configure the cortex M3 private peripheral NVIC */
+    // configure the cortex M3 private peripheral NVIC
+    usbEnbISR();
     bDeviceState = UNCONNECTED;
 }
 
@@ -326,7 +323,7 @@ void usbReset(void)
 
     _SetBTABLE(BTABLE_ADDRESS);
 
-    /* setup the ctrl endpoint */
+    // set up the ctrl endpoint
     _SetEPType(ENDP0, EP_CONTROL);
     _SetEPTxStatus(ENDP0, EP_TX_STALL);
 
@@ -357,10 +354,10 @@ RESULT usbDataSetup(u8 request) {
     u8 *(*CopyRoutine)(u16);
     CopyRoutine = NULL;
 
-    /* handle dfu class requests */
+    // handle dfu class requests
     if ((pInformation->USBbmRequestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
         if (dfuUpdateByRequest()) {
-            /* successfull state transition, handle the request */
+            // successfull state transition, handle the request
             switch (request) {
             case(DFU_GETSTATUS):
                 CopyRoutine = dfuCopyStatus;
@@ -375,7 +372,7 @@ RESULT usbDataSetup(u8 request) {
                 CopyRoutine = dfuCopyUPLOAD;
                 break;
             default:
-                /* leave copy routine null */
+                // leave copy routine null
                 break;
             }
         }
@@ -395,7 +392,7 @@ RESULT usbDataSetup(u8 request) {
 RESULT usbNoDataSetup(u8 request)
 {
     if ((pInformation->USBbmRequestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
-        /* todo, keep track of the destination interface, often stored in wIndex */
+        // todo, keep track of the destination interface, often stored in wIndex
         if (dfuUpdateByRequest()) {
             return USB_SUCCESS;
         }
@@ -405,7 +402,7 @@ RESULT usbNoDataSetup(u8 request)
 
 RESULT usbGetInterfaceSetting(u8 interface, u8 altSetting)
 {
-    /* alt setting 0 -> program RAM, alt setting 1 or higher -> FLASH */
+    // alt setting 0 -> program RAM, alt setting 1 or higher -> FLASH
     if (interface > NUM_ALT_SETTINGS) {
         return USB_UNSUPPORT;
     }
@@ -500,7 +497,6 @@ void usbEnbISR(void)
 {
     NVIC_InitTypeDef NVIC_InitStructure;
 
-
     NVIC_InitStructure.NVIC_IRQChannel = USB_LP_IRQ;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
@@ -565,14 +561,14 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
 #if (ISR_MSK & ISTR_SUSP)
     if (wIstr & ISTR_SUSP & wInterrupt_Mask) {
 
-        /* check if SUSPEND is possible */
+        // check if SUSPEND is possible
         if (F_SUSPEND_ENABLED) {
             usbSuspend();
         } else {
-            /* if not possible then resume after xx ms */
+            // if not possible then resume after xx ms
             usbResume(RESUME_LATER);
         }
-        /* clear of the ISTR bit must be done after setting of CNTR_FSUSP */
+        // clear of the ISTR bit must be done after setting of CNTR_FSUSP
         _SetISTR((u16)CLR_SUSP);
     }
 #endif
@@ -589,8 +585,9 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
 #if (ISR_MSK & ISTR_ESOF)
     if (wIstr & ISTR_ESOF & wInterrupt_Mask) {
         _SetISTR((u16)CLR_ESOF);
-        /* resume handling timing is made with ESOFs */
-        usbResume(RESUME_ESOF); /* request without change of the machine state */
+        // resume handling timing is made with ESOFs
+        // request without change of the machine state
+        usbResume(RESUME_ESOF); 
     }
 #endif
 

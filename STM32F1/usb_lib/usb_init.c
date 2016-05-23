@@ -36,7 +36,7 @@ DEVICE_PROP *pProperty;
 /*  at the end of interrupt process */
 u16	SaveState ;
 volatile u16  wInterrupt_Mask;
-DEVICE_INFO	Device_Info;
+DEVICE_INFO Device_Info;
 USER_STANDARD_REQUESTS  *pUser_Standard_Requests;
 
 /* Extern variables ----------------------------------------------------------*/

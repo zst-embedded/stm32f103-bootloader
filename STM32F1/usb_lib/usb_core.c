@@ -855,12 +855,12 @@ u8 Post0_Process(void)
 *******************************************************************************/
 void SetDeviceAddress(u8 Val)
 {
-    u32 i;
-    u32 nEP = Device_Table.Total_Endpoint;
+    u8 i;
+    u8 nEP = Device_Table.Total_Endpoint;
 
     /* set address in every used endpoint */
     for (i = 0; i < nEP; i++) {
-        _SetEPAddress((u8)i, (u8)i);
+        _SetEPAddress(i, i);
     } /* for */
     _SetDADDR(Val | DADDR_EF); /* set device address and enable function */
 }
