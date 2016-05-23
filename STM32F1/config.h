@@ -51,7 +51,7 @@
 // #define DISABLE_STARTUP_FAST_BLINK
 
 // do we enter bootloader on certain reset methods only?
-#define RESET_ACTIVATION 			RESET_POR | RESET_EXT
+#define RESET_ACTIVATION 			(RESET_POR | RESET_EXT)
 // how about the button? can it override this? uncomment if so
 #define BL_BUTTON_ALWAYS_WORKS
 

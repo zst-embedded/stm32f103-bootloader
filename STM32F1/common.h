@@ -41,19 +41,20 @@
 #include "hardware.h"
 #include "usb.h"
 
+// version
 #define VER_MAJOR 			'1'
 #define VER_MINOR 			'1'
 
+// reset types
 #define RESET_POR 			(1 << 27) 	// power-on reset
 #define RESET_EXT			(1 << 26) 	// reset button via reset pin
 #define RESET_ANY 			0xfe000000 	// all reset types
 
-
 #ifndef RESET_ACTIVATION
-#define RESET_ACTIVATION 	RESET_POR | RESET_EXT
+#define RESET_ACTIVATION 	(RESET_POR | RESET_EXT)
 #endif
 
-
+// user code entry
 typedef void (*FuncPtr)(void);
 
 

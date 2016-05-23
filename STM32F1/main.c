@@ -38,6 +38,9 @@
 #define SW_OR_FLASH 	0
 
 
+static RCC_TypeDef *RCC = (RCC_TypeDef *)RCC_BASE;
+
+
 static int checkUserJump(u8 sw)
 {
 	switch (sw) {
@@ -58,9 +61,9 @@ static int checkUserJump(u8 sw)
 static u32 checkReset()
 {
 #ifdef BL_BUTTON_ALWAYS_WORKS
-	return checkUserJump(SW_ONLY) | (GET_REG(RCC_CSR) & (RESET_ACTIVATION));
+	return checkUserJump(SW_ONLY) | (RCC->CSR & (RESET_ACTIVATION));
 #else
-	return (GET_REG(RCC_CSR) & (RESET_ACTIVATION));
+	return ((RCC->CSR) & (RESET_ACTIVATION));
 #endif
 }
 

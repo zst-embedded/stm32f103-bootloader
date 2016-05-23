@@ -32,37 +32,20 @@
 
 /* macro'd register and peripheral definitions */
 #define PERIPH_BASE ((u32)0x40000000)
+
 #define APB1_BASE   PERIPH_BASE
 #define APB2_BASE   (PERIPH_BASE + 0x10000)
 
-#define RCC         ((u32)0x40021000)
-#define FLASH       ((u32)0x40022000)
-#define GPIOA       ((u32)0x40010800)
-#define GPIOB       ((u32)0x40010C00)
-#define GPIOC       ((u32)0x40011000)
-#define GPIOD       ((u32)0x40011400)
+#define RCC_BASE    (PERIPH_BASE + 0x21000)
+#define FLASH_BASE  (PERIPH_BASE + 0x22000)
 
+#define GPIOA       (PERIPH_BASE + 0x10800)
+#define GPIOB       (PERIPH_BASE + 0x10C00)
+#define GPIOC       (PERIPH_BASE + 0x11000)
+#define GPIOD       (PERIPH_BASE + 0x11400)
 
 #define AFIO_BASE   (APB2_BASE + 0x0000)
-#define AFIO_MAPR  	(AFIO_BASE + 0x04)
-
-
-#define RCC_CR      RCC
-#define RCC_CFGR    (RCC + 0x04)
-#define RCC_CIR     (RCC + 0x08)
-#define RCC_AHBENR  (RCC + 0x14)
-#define RCC_APB2ENR (RCC + 0x18)
-#define RCC_APB1ENR (RCC + 0x1C)
-#define RCC_CSR     (RCC + 0x24)
-
-#define FLASH_ACR     (FLASH + 0x00)
-#define FLASH_KEYR    (FLASH + 0x04)
-#define FLASH_OPTKEYR (FLASH + 0x08)
-#define FLASH_SR      (FLASH + 0x0C)
-#define FLASH_CR      (FLASH + 0x10)
-#define FLASH_AR      (FLASH + 0x14)
-#define FLASH_OBR     (FLASH + 0x1C)
-#define FLASH_WRPR    (FLASH + 0x20)
+#define AFIO_MAPR   (AFIO_BASE + 0x04)
 
 #define FLASH_KEY1     0x45670123
 #define FLASH_KEY2     0xCDEF89AB
@@ -88,14 +71,8 @@
 #define NVIC_BASE  (SCS_BASE + 0x0100)
 #define SCB_BASE   (SCS_BASE + 0x0D00)
 
-
-#define SCS      0xE000E000
-#define NVIC     (SCS+0x100)
-#define SCB      (SCS+0xD00)
-#define STK      (SCS+0x10)
-
-#define SCB_VTOR (SCB+0x08)
-#define STK_CTRL (STK+0x00)
+#define STK_BASE   (SCS_BASE + 0x0010)
+#define STK_CTRL   (STK_BASE + 0x0000)
 
 #define TIM1_APB2_ENB ((u32)0x00000800)
 #define TIM1          ((u32)0x40012C00)
@@ -128,14 +105,14 @@
 #define AFIO_MAPR_SWJ_CFG_NO_JTAG_SW           (0x2 << 24)
 #define AFIO_MAPR_SWJ_CFG_NO_JTAG_NO_SW        (0x4 << 24)
 
-        
-
-
 // more bit twiddling to set Control register bits
 #define CR_SHIFT(pin) ((pin - 8*(pin>7))<<2)
 
-#define SET_REG(addr,val) do { *(vu32*)(addr)=val; } while(0)
-#define GET_REG(addr)        (*(vu32*)(addr))
+#define REG_GET(addr)           (*(vu32*)(addr))
+
+#define REG_SET(addr,val)       do { *(vu32*)(addr) = val; } while(0)
+#define REG_BOR(addr,val)       do { *(vu32*)(addr) |= val; } while(0)
+#define REG_BAND(addr,val)      do { *(vu32*)(addr) &= val; } while(0)
 
 
 
@@ -176,6 +153,31 @@ typedef struct {
     vu32 BFAR;
     vu32 AFSR;
 } SCB_TypeDef;
+
+typedef struct {
+    vu32 CR;
+    vu32 CFGR;
+    vu32 CIR;
+    vu32 APB2RSTR;
+    vu32 ABP1RSTR;
+    vu32 AHBENR;
+    vu32 APB2ENR;
+    vu32 APB1ENR;
+    vu32 RCC_BDCR;
+    vu32 CSR;
+} RCC_TypeDef;
+
+typedef struct {
+    vu32 ACR;
+    vu32 KEYR;
+    vu32 OPTKEYR;
+    vu32 SR;
+    vu32 CR;
+    vu32 AR;
+    vu32 RESERVED0;
+    vu32 OBR;
+    vu32 WRPR;
+} FLASH_TypeDef;
 
 
 //void setPin(u32 bank, u8 pin);
