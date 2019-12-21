@@ -374,6 +374,17 @@
 	// Use HSI and PLL to clock USB
 	#define CLOCK_HSI
 
+	// Device name
+	#define USB_MY_NAME_LEN (42+2)
+	#define USB_MY_NAME_STR 'M', 0, 'a', 0, 'n', 0, 'z', 0, 'e', 0, 'l', 0, ' ', 0, 'N', 0, 'a', 0, 'm', 0, 'e', 0, ' ', 0, 'B', 0, 'a', 0, 'd', 0, 'g', 0, 'e', 0
+
+	#define USB_VENDOR_STR_LEN USB_MY_NAME_LEN
+	#define USB_VENDOR_MSG_STR USB_MY_NAME_STR
+	#define USB_PRODUCT_STR_LEN USB_MY_NAME_LEN
+	#define USB_PRODUCT_MSG_STR USB_MY_NAME_STR
+	#define USB_SERIAL_STR_LEN USB_MY_NAME_LEN
+	#define USB_SERIAL_MSG_STR USB_MY_NAME_STR
+
 #else
 	
 	#error "No config for this target or no target specified"
