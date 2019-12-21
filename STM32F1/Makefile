@@ -132,6 +132,7 @@ stbee :  begin gccversion build_stbee sizeafter finished  copy_stbee end
 naze32: begin gccversion build_naze32 sizeafter finished  copy_naze32 end
 andnxor-dc24-bender: begin gccversion build_andnxor-dc24-bender sizeafter finished  copy_andnxor-dc24-bender end
 tc-gripdaptor: begin gccversion build_tc-gripdaptor sizeafter finished  copy_tc-gripdaptor end
+zst123: begin gccversion build_zst123 sizeafter finished  copy_zst123 end
 build: elf bin lss sym
 
 build_maple-mini: TARGETFLAGS= -DTARGET_MAPLE_MINI
@@ -353,6 +354,17 @@ copy_tc-gripdaptor:
 	cp $(TARGET).bin binaries/dfu_boot20_tc_gripdaptor.bin
 	@echo		
 	
+build_zst123: TARGETFLAGS= -DTARGET_ZST123_F103
+# Set the linker script
+build_zst123: LDFLAGS +=-T$(ST_LIB)/c_only_md_high_density.ld
+build_zst123: elf bin lss sym
+copy_zst123: 
+	@echo
+	@echo "Copying to binaries folder"
+	@echo
+	cp $(TARGET).bin binaries/dfu_zst123.bin
+	@echo	
+
 	
 bin: $(TARGET).bin
 elf: $(TARGET).elf

@@ -359,6 +359,21 @@
 						 ' ',0,'t',0,'o',0,' ',0,'F',0,'l',0,'a',0,'s',0,'h',0,' ',0,'0',0,'x',0,'8',0,'0',0,'0',0, \
 						 '2',0,'0',0,'0',0,'0',0
 
+#elif defined TARGET_ZST123_F103
+
+	/* LED on PC7 */
+	#define LED_BANK		 GPIOC
+	#define LED_PIN 		 7
+	#define LED_ON_STATE	 1
+
+	/* MODE SWITCH on PC1 (pull up) */
+	#define BUTTON_BANK		 GPIOC
+	#define BUTTON_PIN 		 1
+	#define BUTTON_ON_STATE	 1
+
+	// Use HSI and PLL to clock USB
+	#define CLOCK_HSI
+
 #else
 	
 	#error "No config for this target or no target specified"

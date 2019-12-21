@@ -55,6 +55,37 @@ void systemReset(void)
 
 void setupCLK(void)
 {
+
+#ifdef CLOCK_HSI
+    // enable HSI
+    RCC->CR |= 0x00010001; // HSION
+    // and wait for it to come on
+    while ((RCC->CR & 0x00000002) == 0); // HSIRDY
+
+    // enable flash prefetch buffer
+    FLASH->ACR = 0x00000012;
+
+    // Configure PLL
+    // HSI oscillator used as system clock
+    // HSI oscillator clock / 2 selected as PLL input clock (8MHz / 2)
+    // PLL input clock x12 (48MHz)
+    RCC->CFGR |= 0xA << 18;
+
+    // enable the pll
+    RCC->CR |= 0x01000000; // PLLON
+    // and wait for it to come on
+    while ((RCC->CR & 0x02000000) == 0); // PLLRDY
+
+    // AHB prescaler (Prescaler of 2 because max 32MHx for PCLK1)
+    RCC->CFGR |= 8 << 4;
+    // USBPRE: USB prescaler PLL clock is not divided
+    RCC->CFGR |= 1 << 22;
+    // Set SYSCLK as PLL = 48MHz
+    RCC->CFGR |= 2 << 0;
+    // and wait for it to come on
+    while ((RCC->CFGR & 0x00000008) == 0); 
+
+#else
 	unsigned int StartUpCounter=0;
     
     // enable HSE
@@ -92,6 +123,8 @@ void setupCLK(void)
     RCC->CFGR |= 0x00000002;
     // and wait for it to come on
     while ((RCC->CFGR & 0x00000008) == 0); 
+
+#endif
 
     // Enable All GPIO channels (A to E), AFIO clock; disable any other clocks
     RCC->APB2ENR = 0x0000007d;
