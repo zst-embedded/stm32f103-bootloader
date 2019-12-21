@@ -369,7 +369,7 @@
 	/* MODE SWITCH on PC1 (pull up) */
 	#define BUTTON_BANK		 GPIOC
 	#define BUTTON_PIN 		 1
-	#define BUTTON_ON_STATE	 1
+	#define BUTTON_ON_STATE	 0
 
 	// Use HSI and PLL to clock USB
 	#define CLOCK_HSI
